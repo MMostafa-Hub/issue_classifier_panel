@@ -1,0 +1,24 @@
+modules:
+  jira:issuePanel:
+    - key: issue-classifier-panel-hello-world-issue-panel
+      resource: main
+      resolver:
+        function: resolver
+      render: native
+      title: issue_classifier_panel
+      icon: https://developer.atlassian.com/platform/forge/images/icons/issue-panel-icon.svg
+  function:
+    - key: resolver
+      handler: index.handler
+
+resources:
+  - key: main
+    path: src/frontend/index.jsx
+
+app:
+  runtime:
+    name: nodejs18.x
+  id: ari:cloud:ecosystem::app/ecdcf066-8057-470b-81f6-f1e34c322ad8
+permissions:
+  scopes:
+    - read:jira-work
