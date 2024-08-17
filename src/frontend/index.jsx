@@ -11,16 +11,24 @@ const App = () => {
   const fetchSumamryAndDescriptionForIssue = async () => {
     // extract issue ID instead expecting one from function input
     const issueId = context?.extension.issue.id;
-    console.log(`Fetching comments for issue: ${issueId}`);
-
+    console.log(`Fetching summary and description for issue ID: ${issueId}`);
     // modify to take issueId variable
     const res = await requestJira(`/rest/api/3/issue/${issueId}`);
     const data = await res.json();
-    console.log(data);
-    console.log([data.fields.summary, data.fields.description.content[0].content[0].text]);
     return [data.fields.summary, data.fields.description.content[0].content[0].text];
   };
 
+  const fetchAllIssues = async () => {
+    const res = await requestJira('/rest/api/3/search?');
+    const data = await res.json();
+    const extractedIssues = data.issues.map(issue => ({
+      description: issue.fields.description?.content?.[0]?.content?.[0]?.text || '',
+      summary: issue.fields.summary || '',
+      labels: issue.fields.labels || []
+    }));
+
+    console.log(extractedIssues);
+  }
   React.useEffect(() => {
     if (context) {
       // extract issue ID from the context
