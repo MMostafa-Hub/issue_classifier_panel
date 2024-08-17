@@ -6,32 +6,37 @@ const App = () => {
   const context = useProductContext();
 
   // add these code to keep track of comments
-  const [comments, setComments] = React.useState();
-  console.log(`Number of comments on this issue: ${comments?.length}`);
-
-  const fetchCommentsForIssue = async () => {
+  const [summary, setSummary] = React.useState();
+  const [description, setDescription] = React.useState();
+  const fetchSumamryAndDescriptionForIssue = async () => {
     // extract issue ID instead expecting one from function input
     const issueId = context?.extension.issue.id;
+    console.log(`Fetching comments for issue: ${issueId}`);
 
     // modify to take issueId variable
-    const res = await requestJira(`/rest/api/3/issue/${issueId}/comment`);
+    const res = await requestJira(`/rest/api/3/issue/${issueId}`);
     const data = await res.json();
-    return data.comments;
+    console.log(data);
+    console.log([data.fields.summary, data.fields.description.content[0].content[0].text]);
+    return [data.fields.summary, data.fields.description.content[0].content[0].text];
   };
 
   React.useEffect(() => {
     if (context) {
       // extract issue ID from the context
       const issueId = context.extension.issue.id;
-
-      fetchCommentsForIssue().then(setComments);
+      console.log(`Issue ID: ${issueId}`);
+      fetchSumamryAndDescriptionForIssue().then(([summary, description]) => {
+        setSummary(summary);
+        setDescription(description);
+      });
     }
   }, [context]);
 
   return (
     <>
       <Text>Hello world!</Text>
-      <Text>{`Number of comments on this issue: ${comments?.length}`}</Text>
+      <Text>{`Summary: ${summary}, Description ${description}`}</Text>
     </>
   );
 };
