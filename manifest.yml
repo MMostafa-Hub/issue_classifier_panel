@@ -22,3 +22,7 @@ app:
 permissions:
   scopes:
     - read:jira-work
+  external:
+    fetch:
+      backend:
+        - 34bd-105-88-48-92.ngrok-free.app
