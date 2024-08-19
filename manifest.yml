@@ -25,4 +25,4 @@ permissions:
   external:
     fetch:
       backend:
-        - 34bd-105-88-48-92.ngrok-free.app
+        - 'https://chief-unified-moccasin.ngrok-free.app'
