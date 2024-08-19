@@ -1,9 +1,22 @@
 import React from 'react';
 import ForgeReconciler, { Text, useProductContext } from '@forge/react';
-import { requestJira } from '@forge/bridge';
+import { requestJira, invoke } from '@forge/bridge';
 
 const App = () => {
   const context = useProductContext();
+  const [issueAddedFlag, setIssueAddedFlag] = React.useState(false);
+  const [issues, setIssues] = React.useState([]);
+  const fetchAllIssues = async () => {
+    const res = await requestJira('/rest/api/3/search?');
+    const data = await res.json();
+    const extractedIssues = data.issues.map(issue => ({
+      description: issue.fields.description?.content?.[0]?.content?.[0]?.text || '',
+      summary: issue.fields.summary || '',
+      labels: issue.fields.labels || []
+    }));
+
+    return extractedIssues;
+  }
 
   // add these code to keep track of comments
   const [summary, setSummary] = React.useState();
@@ -15,33 +28,12 @@ const App = () => {
     // modify to take issueId variable
     const res = await requestJira(`/rest/api/3/issue/${issueId}`);
     const data = await res.json();
+    if (!data.fields.description) {
+      return [data.fields.summary, ''];
+    }
     return [data.fields.summary, data.fields.description.content[0].content[0].text];
   };
-  fetch('https://34bd-105-88-48-92.ngrok-free.app')
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
-      }
-      return response.json();  // or response.text() if the response is not JSON
-    })
-    .then(data => {
-      console.log('Response data:', data);
-      // Handle the data here
-    })
-    .catch(error => {
-      console.error('There was a problem with the fetch operation:', error);
-    });
-  const fetchAllIssues = async () => {
-    const res = await requestJira('/rest/api/3/search?');
-    const data = await res.json();
-    const extractedIssues = data.issues.map(issue => ({
-      description: issue.fields.description?.content?.[0]?.content?.[0]?.text || '',
-      summary: issue.fields.summary || '',
-      labels: issue.fields.labels || []
-    }));
 
-    console.log(extractedIssues);
-  }
   React.useEffect(() => {
     if (context) {
       // extract issue ID from the context
@@ -51,13 +43,51 @@ const App = () => {
         setSummary(summary);
         setDescription(description);
       });
+
+      var collection_name = context?.extension.project.key
+      collection_name = "sample_project"
+      invoke("createCollection", { collection_name: collection_name }).then((res) => {
+        console.log(res);
+      });
     }
   }, [context]);
 
+  React.useEffect(() => {
+    fetchAllIssues().then((issues) => {
+      setIssues(issues);
+    });
+  }, []);
+
+  React.useEffect(() => {
+
+    if (issues.length > 0) {
+      console.log(issues);
+      invoke("addIssues", { issues: issues }).then((res) => {
+        console.log(res);
+        setIssueAddedFlag(true);
+      });
+    }
+
+  }, [issues]);
+
+  const [predictedLabels, setPredictedLabels] = React.useState([]);
+  React.useEffect(() => {
+    console.log("Issues added flag: ", issueAddedFlag);
+    if (issueAddedFlag == true) {
+      console.log("Issues added, getting prediction");
+      invoke("getPrediction", { summary: summary, description: description }).then((res) => {
+        console.log(res);
+        setPredictedLabels(res["prediction"]);
+      });
+    }
+  }, [issueAddedFlag]);
+
+
   return (
     <>
-      <Text>Hello world!</Text>
-      <Text>{`Summary: ${summary}, Description ${description}`}</Text>
+      <Text>{`Summary: ${summary}, Description: ${description}`}</Text>
+      <Text>{`Issues in the project: ${issues.length}`}</Text>
+      <Text>{`Predicted Labels: ${predictedLabels}`}</Text>
     </>
   );
 };
